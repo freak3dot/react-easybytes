@@ -6,71 +6,84 @@ class EasyBytes extends React.Component {
 		abbr: React.PropTypes.bool,
 		defaultUnit: React.PropTypes.number,
 		defaultValue: React.PropTypes.number,
-		id: React.PropTypes.string,
-		inputClass: React.PropsTypes.string,
+		inputClass: React.PropTypes.string,
 		multiple: React.PropTypes.oneOf(['1024', '1000']),
+		name: React.PropTypes.string,
 		onChange: React.PropTypes.func,
 		placeholder: React.PropTypes.string,
-		selectClass: React.PropsTypes.string,
+		selectClass: React.PropTypes.string,
 	};
 
 	static defaultProps = {
 		abbr: false,
 		defaultUnit: 3,
 		defaultValue: 0,
+		inputClass: '',
 		multiple: '1000',
+		name: null,
+		selectClass: '',
 	};
 
 	constructor(props) {
 		super(props);
 
+		const initial = this.convertBytesToInput(props.defaultValue, props.defaultUnit);
+
 		this.state = {
-			bytes: props.defaultValue,
+			amount: initial.amount,
 			unit: props.defaultUnit,
 		};
 
 		// Efficient early binding.
-		this.onlyAllowCertainKeys = this.onlyAllowCertainKeys.bind(this);
 		this.onChange = this.onChange.bind(this);
-		this.onChangeBytes = this.onChangeBytes.bind(this);
-		this.onChangeUnit = this.onChangeUnit.bind(this);
+		this.onAmountChange = this.onAmountChange.bind(this);
+		this.onUnitChange = this.onUnitChange.bind(this);
 	}
 
-	onlyAllowCertainKeys(e) {
-		// Block non-numeric and non-navigation keys in widget
-		const key = e.charCode || e.keyCode || 0;
-		// Allow only the keys listed below
-		return (
-			key === 8 ||   // backspace
-			key === 9 ||   // tab
-			key === 37 ||  // left arrow
-			key === 39 ||  // right arrow
-			key === 46 ||  // delete
-			key === 110 || // decimal point
-			key === 190 || // period
-			(key >= 48 && key <= 57) ||
-			(key >= 96 && key <= 105)
-		);
-	}
-
+	/*
+	 * Callback to other react components in the event of a change.
+	 *
+	 * @params {event} e Synthetic React Event
+	 *
+	 * @returns {void}
+	 */
 	onChange() {
 		if (this.props.onChange) {
-			this.props.onChange(this.returnValue());
+			this.props.onChange(this.convertInputToBytes());
 		}
 	}
 
-	onChangeBytes(e) {
+	/*
+	 * Event handler for ammount change.
+	 *
+	 * @params {event} e Synthetic React Event
+	 *
+	 * @returns {void}
+	 */
+	onAmountChange(e) {
 		this.setState({
-			bytes: e.value,
+			amount: e.target.value,
 		}, this.onChange);
 	}
 
-	onChangeUnit(e) {
+	/*
+	 * Event handler for unit change.
+	 *
+	 * @params {event} e Synthetic React Event
+	 *
+	 * @returns {void}
+	 */
+	onUnitChange(e) {
 		this.setState({
-			unit: e.value,
+			unit: e.target.value,
 		}, this.onChange);
 	}
 
+	/*
+	 * Maintain an internal list of different storage sizes.
+	 *
+	 * @returns {array}
+	 */
 	getUnits() {
 		if (this.props.abbr) {
 			return ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
@@ -79,52 +92,86 @@ class EasyBytes extends React.Component {
 		return ['Bytes', 'Kilobytes', 'Megabytes', 'Gigabytes', 'Terabytes', 'Petabytes'];
 	}
 
+	/**
+	 * Utility function to round a number to two decimal places.
+	 *
+	 * @param {float} n
+	 *
+	 * @returns {number}
+	 */
 	roundToTwoPlaces(n) {
 		return Math.round((n * 100) + ((n * 1000) % 10 > 4 ? 1 : 0)) / 100;
 	}
 
-	returnValue() {
+	/*
+	 * Convert our internally stored state into human readable bytes.
+	 *
+	 * @returns {string|int}
+	 */
+	convertInputToBytes() {
 		const { multiple } = this.props;
-		let rtnValue = 0;
-
-		const { amt, unit } = this.displayValue();
+		const { amount, unit } = this.state;
+		let bytes = 0;
 
 		// Convert the return value to a power of settings.multiple[1024]
 		if (unit === '0') {
-			rtnValue = parseInt(amt, 10);
+			bytes = parseInt(amount, 10);
 		} else {
-			rtnValue = parseFloat(amt) * Math.pow(multiple, parseFloat(unit));
+			bytes = parseFloat(amount) * Math.pow(multiple, parseFloat(unit));
 		}
 
 		// Add new amount to the parent input field
-		if (!isNaN(rtnValue)) {
-			return parseInt(rtnValue, 10);
+		if (!isNaN(bytes)) {
+			return parseInt(bytes, 10);
 		}
 
 		return '';
 	}
 
-	displayValue() {
-		const { multiple, defaultUnit } = this.props;
-		const { bytes } = this.state;
-		let i = Math.min(4, Math.floor(Math.log(bytes) / Math.log(multiple)), 10);
-		let amt = this.roundToTwoPlaces(bytes / Math.pow(multiple, i));
+	convertBytesToInput(bytes, multiple) {
+		const { defaultUnit } = this.props;
+		let unit = Math.min(4, Math.floor(Math.log(bytes) / Math.log(multiple)), 10);
+		let amount = this.roundToTwoPlaces(bytes / Math.pow(multiple, unit));
 
-		if (isNaN(amt)) {
-			amt = '';
-			i = defaultUnit;
+		if (isNaN(amount)) {
+			amount = '';
+			unit = defaultUnit;
 		}
 
 		return {
-			amt,
-			unit: i,
+			amount,
+			unit,
 		};
 	}
 
+	/**
+	 * Render the hidden input. This is only rendered if a name is specified.
+	 * When providing the name, we render a hidden input so we can submit this
+	 * to the server. When name is not provided, we assume this component is
+	 * used exclusively through JavaScript (React).
+	 *
+	 * @returns {XML|null}
+	 */
+	renderHiddenInput() {
+		const { name } = this.props;
+
+		if (name) {
+			return (
+				<input
+					type="hidden"
+					name={name}
+					value={this.convertInputToBytes()}
+				/>
+			);
+		}
+
+		return null;
+	}
+
 	render() {
-		const { id, inputClass, placeholder, selectClass } = this.props;
+		const { inputClass, placeholder, selectClass } = this.props;
 		const sizes = this.getUnits();
-		const { amt, unit } = this.displayValue();
+		const { amount, unit } = this.state;
 		const inputClasses = classNames({
 			'easybytes-input': true,
 		});
@@ -138,23 +185,22 @@ class EasyBytes extends React.Component {
 		));
 
 		return (
-			<div className="easybytes">
+			<div className="react-easybytes">
 				<input
 					type="text"
-					id={`txt_${id}`}
 					className={`${inputClasses} ${inputClass}`}
-					onKeyDown={this.onlyAllowCertainKeys}
-					onKeyUp={this.onChangeBytes}
+					onChange={this.onAmountChange}
 					placeholder={placeholder}
-					value={amt}
+					value={amount}
 				/>
 				<select
-					id={`sel_${id}`}
 					className={`${selectClasses} ${selectClass}`}
-					selected={unit}
+					onChange={this.onUnitChange}
+					value={unit}
 				>
 					{options}
 				</select>
+				{this.renderHiddenInput()}
 			</div>
 		);
 	}
