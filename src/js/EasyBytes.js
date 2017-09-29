@@ -7,7 +7,7 @@ class EasyBytes extends React.Component {
 		defaultUnit: React.PropTypes.number,
 		defaultValue: React.PropTypes.number,
 		inputClass: React.PropTypes.string,
-		multiple: React.PropTypes.oneOf(['1024', '1000']),
+		multiple: React.PropTypes.oneOf([1024, 1000]),
 		name: React.PropTypes.string,
 		onChange: React.PropTypes.func,
 		placeholder: React.PropTypes.string,
@@ -19,11 +19,18 @@ class EasyBytes extends React.Component {
 		defaultUnit: 3,
 		defaultValue: 0,
 		inputClass: '',
-		multiple: '1000',
+		multiple: 1000,
 		name: null,
 		selectClass: '',
 	};
 
+	/**
+	 * constructor
+	 *
+	 * @param {object} props Properties
+	 *
+	 * @returns {void}
+	 */
 	constructor(props) {
 		super(props);
 
@@ -48,13 +55,15 @@ class EasyBytes extends React.Component {
 	 * @returns {void}
 	 */
 	onChange() {
-		if (this.props.onChange) {
-			this.props.onChange(this.convertInputToBytes());
+		const { onChange } = this.props;
+
+		if (onChange) {
+			onChange(this.convertInputToBytes());
 		}
 	}
 
 	/*
-	 * Event handler for ammount change.
+	 * Event handler for amount change.
 	 *
 	 * @params {event} e Synthetic React Event
 	 *
@@ -128,6 +137,14 @@ class EasyBytes extends React.Component {
 		return '';
 	}
 
+	/**
+	 * Convert bytes to amount and unit for state.
+	 *
+	 * @param {number} bytes Number of bytes.
+	 * @param {number} multiple Multiple of 1000 or 1024.
+	 *
+	 * @returns {{amount: number, unit: number}}
+	 */
 	convertBytesToInput(bytes, multiple) {
 		const { defaultUnit } = this.props;
 		let unit = Math.min(4, Math.floor(Math.log(bytes) / Math.log(multiple)), 10);
@@ -168,6 +185,11 @@ class EasyBytes extends React.Component {
 		return null;
 	}
 
+	/**
+	 * Render the EasyBytes Component.
+	 *
+	 * @returns {XML}
+	 */
 	render() {
 		const { inputClass, placeholder, selectClass } = this.props;
 		const sizes = this.getUnits();
