@@ -94,7 +94,9 @@ class EasyBytes extends React.Component {
 	 * @returns {array}
 	 */
 	getUnits() {
-		if (this.props.abbr) {
+		const { abbr } = this.props;
+
+		if (abbr) {
 			return ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
 		}
 
