@@ -196,9 +196,11 @@ class EasyBytes extends React.Component {
 		const { amount, unit } = this.state;
 		const inputClasses = classNames({
 			'easybytes-input': true,
+			[inputClass]: inputClass,
 		});
 		const selectClasses = classNames({
 			'easybytes-select': true,
+			[selectClass]: selectClass,
 		});
 		const options = sizes.map((v, i) => (
 			<option value={i} key={i}>
@@ -210,13 +212,13 @@ class EasyBytes extends React.Component {
 			<div className="react-easybytes">
 				<input
 					type="text"
-					className={`${inputClasses} ${inputClass}`}
+					className={inputClasses}
 					onChange={this.onAmountChange}
 					placeholder={placeholder}
 					value={amount}
 				/>
 				<select
-					className={`${selectClasses} ${selectClass}`}
+					className={selectClasses}
 					onChange={this.onUnitChange}
 					value={unit}
 				>
