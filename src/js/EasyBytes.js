@@ -1,6 +1,9 @@
 import classNames from 'classnames';
 import React from 'react';
 
+/**
+ * React EasyBytes class.
+ */
 class EasyBytes extends React.Component {
 	static propTypes = {
 		abbr: React.PropTypes.bool,
@@ -169,7 +172,7 @@ class EasyBytes extends React.Component {
 	 * to the server. When name is not provided, we assume this component is
 	 * used exclusively through JavaScript (React).
 	 *
-	 * @returns {XML|null}
+	 * @returns {React.node|null}
 	 */
 	renderHiddenInput() {
 		const { name } = this.props;
@@ -190,7 +193,7 @@ class EasyBytes extends React.Component {
 	/**
 	 * Render the EasyBytes Component.
 	 *
-	 * @returns {XML}
+	 * @returns {React.node}
 	 */
 	render() {
 		const { inputClass, placeholder, selectClass } = this.props;
